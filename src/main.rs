@@ -2,9 +2,11 @@ use color_eyre::Result;
 use ratatui::{
     DefaultTerminal, Frame,
     buffer::Buffer,
-    crossterm::event::{self, Event, KeyCode, KeyEventKind},
-    layout::{Alignment, Constraint, Flex, Layout, Rect},
-    widgets::Widget,
+    layout::Rect,
+    style::{Style, Stylize},
+    symbols::border,
+    text::Line,
+    widgets::{Block, Paragraph, Widget},
 };
 
 fn main() -> Result<()> {
@@ -17,7 +19,7 @@ fn main() -> Result<()> {
 
 #[derive(Default)]
 struct App {
-    layout_name: String,
+    // layout_name: String,
     state: AppState,
 }
 
@@ -47,6 +49,13 @@ impl App {
 
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        todo!("Later")
+        let title = Line::from("Tab 1".bold());
+        // let layout = Layout::vertical([Length(1), Length(3), Fill(0)]);
+        let block = Block::bordered()
+            .title(title)
+            .border_set(border::THICK)
+            .border_style(Style::new().blue());
+
+        Paragraph::new("").centered().block(block).render(area, buf);
     }
 }
