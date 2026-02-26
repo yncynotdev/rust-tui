@@ -28,7 +28,7 @@ fn main() -> Result<()> {
 // They alway call this struct to determine the parts or features of your TUI
 // AFAIK: You should implement some sort of State Machine to determine states of your TUI
 [#derive(Default, Debug)]
-struct App { 
+struct App {
     state: AppState,
 }
 
@@ -38,7 +38,8 @@ struct App {
 // You can add more
 [#derive(Default, PartialEq, Debug)]
 enum AppState {
-    [#default] // Means "Running" will be the default
+    // Means "Running" will be the default
+    [#default]
     Running,
     Quit
 }
@@ -62,20 +63,22 @@ impl App {
     }
 
     fn handle_events(&self) -> Result<()> {
-        // Check event reads
-        if let Event::Key(key) = event::read()? {
-            // Check if you are pressing a key 
-            // key is KeyEventKind::Press
-            if key.kind != KeyEventKind::Press {
-                return Ok(());
-            }
-            todo!("match logic");
-        }
+        match event::read? {
+            Event::Key(key) if key.event == KeyEventKind::Press => match key.code {
+                todo!("KeyCode::* logic")
+                _ => ()
+            },
+            _ => {}
+        };
     }
 
     // Handle the state here
     fn is_running(&self) -> bool {
         self.state == AppState::Running
+    }
+
+    fn quit(&mut self) {
+        self.state = AppState:Quit
     }
 }
 
