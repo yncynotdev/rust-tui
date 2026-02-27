@@ -1,11 +1,12 @@
-use ::std::io;
+use std::io;
+use std::time::SystemTime;
 
 use color_eyre::Result;
 use ratatui::{
     DefaultTerminal, Frame,
     buffer::Buffer,
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
-    layout::Rect,
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Style, Stylize},
     symbols::border,
     text::Line,
@@ -20,17 +21,34 @@ fn main() -> Result<()> {
     app_result
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct App {
-    // layout_name: String,
     state: AppState,
+    items: Vec<Data>,
 }
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Debug)]
 enum AppState {
     #[default]
     Running,
     Quit,
+}
+
+#[derive(Default, Debug)]
+struct Data {
+    date: String,
+    modality: Modality,
+    time_in: String,
+    time_out: String,
+    total_of_hours: u32,
+    task_accomplished: String,
+}
+
+#[derive(Default, PartialEq, Debug)]
+enum Modality {
+    #[default]
+    Onsite,
+    Online,
 }
 
 impl App {
@@ -43,7 +61,13 @@ impl App {
     }
 
     fn draw(&self, frame: &mut Frame) {
-        frame.render_widget(self, frame.area());
+        let layout = Layout::default()
+            .direction(Direction::Vertical)
+            .margin(1)
+            .constraints(vec![Constraint::Min(1)])
+            .split(frame.area());
+
+        frame.render_widget(self, layout[0]);
     }
 
     fn is_running(&self) -> bool {
@@ -53,7 +77,7 @@ impl App {
     fn handle_events(&mut self) -> io::Result<()> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
-                KeyCode::Char('q') => self.exit(),
+                KeyCode::Char('q') => self.quit(),
                 _ => (),
             },
             _ => {}
@@ -61,21 +85,27 @@ impl App {
         Ok(())
     }
 
-    fn exit(&mut self) {
+    fn quit(&mut self) {
         self.state = AppState::Quit
     }
 }
 
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let title = Line::from("Tab 1".bold());
-        let options = Line::from(vec!["q".bold(), "-Exit".bold()]);
-        // let layout = Layout::vertical([Length(1), Length(3), Fill(0)]);
+        let title = Line::from(vec!["OJT Tracker".magenta().bold()]);
+        let options = Line::from(vec![
+            " <I -".magenta().bold(),
+            " Time-In>".magenta().bold(),
+            " <O -".magenta().bold(),
+            " Time-Out>".magenta().bold(),
+            " <Q -".magenta().bold(),
+            " Quit> ".magenta().bold(),
+        ]);
         let block = Block::bordered()
-            .title(title)
-            .title_bottom(options)
+            .title_top(title.centered())
+            .title_bottom(options.centered())
             .border_set(border::THICK)
-            .border_style(Style::new().blue());
+            .border_style(Style::new().magenta());
 
         Paragraph::new("").centered().block(block).render(area, buf);
     }
