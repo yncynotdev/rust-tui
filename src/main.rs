@@ -10,7 +10,7 @@ use ratatui::{
     style::{Style, Stylize},
     symbols::border,
     text::Line,
-    widgets::{Block, Paragraph, Widget},
+    widgets::{Block, Paragraph, Row, Table, Widget},
 };
 
 fn main() -> Result<()> {
@@ -64,10 +64,50 @@ impl App {
         let layout = Layout::default()
             .direction(Direction::Vertical)
             .margin(1)
-            .constraints(vec![Constraint::Min(1)])
+            .constraints(vec![Constraint::Min(1), Constraint::Length(5)])
             .split(frame.area());
 
-        frame.render_widget(self, layout[0]);
+        let rows = [Row::new(vec![
+            "Foo",
+            "Modality",
+            "Time in",
+            "Time out",
+            "Total of Hours",
+            "Task Accomplished",
+        ])];
+        let widths = [
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(10),
+        ];
+
+        let table = Table::new(rows, widths)
+            .column_spacing(1)
+            .style(Style::new().green())
+            .header(
+                Row::new(vec![
+                    "Date",
+                    "Modality",
+                    "Time in",
+                    "Time out",
+                    "Total of Hours",
+                    "Task Accomplished",
+                ])
+                .style(Style::new().bold())
+                .bottom_margin(1),
+            )
+            .block(
+                Block::bordered()
+                    .title("Table")
+                    .border_set(border::THICK)
+                    .border_style(Style::new().magenta()),
+            );
+
+        frame.render_widget(table, layout[0]);
+        frame.render_widget(self, layout[1]);
     }
 
     fn is_running(&self) -> bool {
