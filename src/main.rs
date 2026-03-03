@@ -1,5 +1,5 @@
 use std::io;
-use std::time::SystemTime;
+// use std::time::SystemTime;
 
 use color_eyre::Result;
 use ratatui::{
@@ -10,7 +10,7 @@ use ratatui::{
     style::{Style, Stylize},
     symbols::border,
     text::Line,
-    widgets::{Block, Paragraph, Row, Table, Widget},
+    widgets::{Block, Paragraph, Row, StatefulWidget, Table, TableState, Widget},
 };
 
 fn main() -> Result<()> {
@@ -23,7 +23,8 @@ fn main() -> Result<()> {
 
 #[derive(Default, Debug)]
 struct App {
-    state: AppState,
+    app_state: AppState,
+    table_state: TableState,
     items: Vec<Data>,
 }
 
@@ -60,58 +61,23 @@ impl App {
         Ok(())
     }
 
-    fn draw(&self, frame: &mut Frame) {
+    fn draw(&mut self, frame: &mut Frame) {
         let layout = Layout::default()
             .direction(Direction::Vertical)
             .margin(1)
             .constraints(vec![Constraint::Min(1), Constraint::Length(5)])
             .split(frame.area());
 
-        let rows = [Row::new(vec![
-            "Foo",
-            "Modality",
-            "Time in",
-            "Time out",
-            "Total of Hours",
-            "Task Accomplished",
-        ])];
-        let widths = [
-            Constraint::Length(10),
-            Constraint::Length(10),
-            Constraint::Length(10),
-            Constraint::Length(10),
-            Constraint::Length(10),
-            Constraint::Length(10),
-        ];
-
-        let table = Table::new(rows, widths)
-            .column_spacing(1)
-            .style(Style::new().green())
-            .header(
-                Row::new(vec![
-                    "Date",
-                    "Modality",
-                    "Time in",
-                    "Time out",
-                    "Total of Hours",
-                    "Task Accomplished",
-                ])
-                .style(Style::new().bold())
-                .bottom_margin(1),
-            )
-            .block(
-                Block::bordered()
-                    .title("Table")
-                    .border_set(border::THICK)
-                    .border_style(Style::new().magenta()),
-            );
-
-        frame.render_widget(table, layout[0]);
-        frame.render_widget(self, layout[1]);
+        self.render_table(frame, layout[0]);
+        self.render_app(frame, layout[1]);
     }
 
     fn is_running(&self) -> bool {
-        self.state == AppState::Running
+        self.app_state == AppState::Running
+    }
+
+    fn quit(&mut self) {
+        self.app_state = AppState::Quit
     }
 
     fn handle_events(&mut self) -> io::Result<()> {
@@ -125,13 +91,50 @@ impl App {
         Ok(())
     }
 
-    fn quit(&mut self) {
-        self.state = AppState::Quit
-    }
-}
+    fn render_table(&mut self, frame: &mut Frame, area: Rect) {
+        let rows = [Row::new(vec![
+            "Foo",
+            "Modality",
+            "Time in",
+            "Time out",
+            "Total of Hours",
+            "Task Accomplished",
+        ])];
+        let widths = [
+            Constraint::Min(1),
+            Constraint::Min(1),
+            Constraint::Min(1),
+            Constraint::Min(1),
+            Constraint::Min(1),
+            Constraint::Min(1),
+        ];
 
-impl Widget for &App {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+        let table = Table::new(rows, widths)
+            .column_spacing(1)
+            .style(Style::new().yellow())
+            .header(
+                Row::new(vec![
+                    "Date",
+                    "Modality",
+                    "Time in",
+                    "Time out",
+                    "Total of Hours",
+                    "Task Accomplished",
+                ])
+                .style(Style::new().bold().magenta())
+                .bottom_margin(1),
+            )
+            .block(
+                Block::bordered()
+                    .title("Table")
+                    .border_set(border::THICK)
+                    .border_style(Style::new().magenta()),
+            );
+
+        frame.render_stateful_widget(table, area, &mut self.table_state);
+    }
+
+    fn render_app(&mut self, frame: &mut Frame, area: Rect) {
         let title = Line::from(vec!["OJT Tracker".magenta().bold()]);
         let options = Line::from(vec![
             " <I -".magenta().bold(),
@@ -147,6 +150,7 @@ impl Widget for &App {
             .border_set(border::THICK)
             .border_style(Style::new().magenta());
 
-        Paragraph::new("").centered().block(block).render(area, buf);
+        let p = Paragraph::new("").centered().block(block);
+        frame.render_widget(p, area);
     }
 }
